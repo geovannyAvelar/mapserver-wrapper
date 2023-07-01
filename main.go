@@ -31,7 +31,7 @@ func main() {
 
 	router := chi.NewRouter()
 
-	router.Route("/", func(r chi.Router) {
+	router.Route(GetRootPath(), func(r chi.Router) {
 		r.Get("/", handleTile)
 	})
 
