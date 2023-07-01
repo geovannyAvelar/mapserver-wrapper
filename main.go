@@ -68,21 +68,21 @@ func handleTile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b, err = renderTile(MAPSERVER_EXEC, queryString)
+	b, imgType, err := renderTile(MAPSERVER_EXEC, queryString)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	go saveTile(queryString, b)
+	go saveTile(queryString, imgType, b)
 
-	w.Header().Add("Content-Type", "image/jpeg")
-	w.Header().Add("Content-Disposition", "inline; filename=\"tile.jpeg\"")
+	w.Header().Add("Content-Type", fmt.Sprintf("image/%s", imgType))
+	w.Header().Add("Content-Disposition", fmt.Sprintf("inline; filename=\"image.%s\"", imgType))
 	w.Write(b)
 }
 
-func renderTile(mapServerExecPath, queryString string) ([]byte, error) {
+func renderTile(mapServerExecPath, queryString string) ([]byte, string, error) {
 	queryString = fmt.Sprintf("QUERY_STRING=%s", queryString)
 
 	cmd := exec.Command(
@@ -94,7 +94,7 @@ func renderTile(mapServerExecPath, queryString string) ([]byte, error) {
 	if err != nil {
 		msg := fmt.Sprintf("Failed to render tile: %v", err)
 		log.Error(msg)
-		return nil, errors.New(msg)
+		return nil, "", errors.New(msg)
 	}
 
 	response := string(out)
@@ -102,18 +102,30 @@ func renderTile(mapServerExecPath, queryString string) ([]byte, error) {
 		message, err := parseMapServerErrorMessage(response)
 
 		if err != nil {
-			return nil, errors.New("cannot generate tile")
+			return nil, "", errors.New("cannot generate tile")
 		}
 
 		log.Errorf("cannot generate tile. Cause: %s", message)
 
-		return nil, fmt.Errorf("cannot generate tile. %s", message)
+		return nil, "", fmt.Errorf("cannot generate tile. %s", message)
 	}
 
-	response = strings.ReplaceAll(response, "Content-Type: image/jpeg", "")
+	imgType := ""
+
+	if strings.Contains(response, "image/jpeg") {
+		imgType = "jpeg"
+	}
+
+	if strings.Contains(response, "image/png") {
+		imgType = "png"
+	}
+
+	contentType := fmt.Sprintf("Content-Type: image/%s", imgType)
+
+	response = strings.ReplaceAll(response, contentType, "")
 	response = strings.TrimSpace(response)
 
-	return []byte(response), nil
+	return []byte(response), imgType, nil
 }
 
 func parseMapServerErrorMessage(htmlResponse string) (string, error) {
@@ -141,8 +153,8 @@ func parseMapServerErrorMessage(htmlResponse string) (string, error) {
 	return "", errors.New("cannot parse MapServer error message")
 }
 
-func saveTile(queryString string, bytes []byte) error {
-	filepath := GetCachePath() + string(os.PathSeparator) + createMd5Hash(queryString)
+func saveTile(queryString string, format string, bytes []byte) error {
+	filepath := GetCachePath() + string(os.PathSeparator) + createMd5Hash(queryString) + "." + format
 
 	if _, err := os.Stat(filepath); err == nil {
 		return nil
