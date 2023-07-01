@@ -31,3 +31,6 @@ __debug_bin
 
 # Cache directory
 cache
+
+# Binaries
+mapserver-wrapper
