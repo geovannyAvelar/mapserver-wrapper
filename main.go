@@ -105,6 +105,8 @@ func renderTile(mapServerExecPath, queryString string) ([]byte, error) {
 			return nil, errors.New("cannot generate tile")
 		}
 
+		log.Errorf("cannot generate tile. Cause: %s", message)
+
 		return nil, fmt.Errorf("cannot generate tile. %s", message)
 	}
 
