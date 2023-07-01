@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -51,12 +53,29 @@ func main() {
 
 func handleTile(w http.ResponseWriter, r *http.Request) {
 	queryString := r.URL.RawQuery
-	b, err := renderTile(MAPSERVER_EXEC, queryString)
 
-	if queryString == "" || err != nil {
+	if queryString == "" {
+		http.Error(w, "Query parameters cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	b, err := getTileFromDisk(queryString)
+
+	if err == nil {
+		w.Header().Add("Content-Type", "image/jpeg")
+		w.Header().Add("Content-Disposition", "inline; filename=\"tile.jpeg\"")
+		w.Write(b)
+		return
+	}
+
+	b, err = renderTile(MAPSERVER_EXEC, queryString)
+
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	go saveTile(queryString, b)
 
 	w.Header().Add("Content-Type", "image/jpeg")
 	w.Header().Add("Content-Disposition", "inline; filename=\"tile.jpeg\"")
@@ -118,6 +137,48 @@ func parseMapServerErrorMessage(htmlResponse string) (string, error) {
 	}
 
 	return "", errors.New("cannot parse MapServer error message")
+}
+
+func saveTile(queryString string, bytes []byte) error {
+	filepath := GetCachePath() + string(os.PathSeparator) + createMd5Hash(queryString)
+
+	if _, err := os.Stat(filepath); err == nil {
+		return nil
+	}
+
+	err := os.WriteFile(filepath, bytes, 0644)
+
+	if err != nil {
+		log.Warnf("cannot create tile file. Cause: %s", err)
+		return fmt.Errorf("cannot create tile file. Cause: %w", err)
+	}
+
+	return nil
+}
+
+func getTileFromDisk(queryString string) ([]byte, error) {
+	filepath := GetCachePath() + string(os.PathSeparator) + createMd5Hash(queryString)
+
+	if _, err := os.Stat(filepath); err != nil {
+		return nil, errors.New("tile is not cached")
+	}
+
+	bytes, err := os.ReadFile(filepath)
+
+	if err != nil {
+		return nil, fmt.Errorf("cannot read tile from disk. Cause: %w", err)
+	}
+
+	return bytes, nil
+}
+
+func createMd5Hash(text string) string {
+	hasher := md5.New()
+	_, err := io.WriteString(hasher, text)
+	if err != nil {
+		panic(err)
+	}
+	return hex.EncodeToString(hasher.Sum(nil))
 }
 
 func LoadDotEnvFile(path string) {
