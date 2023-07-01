@@ -13,6 +13,15 @@ Run the bootstrap command to copy the default dot file. Use the following comman
 
 ```make bootstrap```
 
+To run the wrapper:
+
+```mapserver-wrapper```
+
+This will run using the dot env located in the root of this repo (*.env*). To run with
+a different dot file, simply use this command:
+
+```mapserver-wrapper DIFFERENT_DOT_FILE_PATH.env```
+
 ## Enviroment variables
 
 * **MAPSERVER_WRAPPER_MAP_SERV_EXEC_PATH**: Path to MapServer executable. Default is the MapServer executable located in this repository, in *bin/mapserv*;
