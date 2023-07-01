@@ -1,0 +1,14 @@
+[Unit]
+Description=MapServer Wrapper
+After=network.target
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+ExecStart=mapserver-wrapper /etc/mapserver-wrapper/conf.env
+
+[Install]
+WantedBy=multi-user.target

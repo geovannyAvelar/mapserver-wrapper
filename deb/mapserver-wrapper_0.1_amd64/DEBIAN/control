@@ -1,0 +1,5 @@
+Package: mapserver-wrapper
+Version: 0.1
+Architecture: amd64
+Maintainer: Giovanni Avelar <geovanny.avelar@gmail.com>
+Description: A simple wrapper for MapServer, allowing cache of WMS tiles on disk

@@ -27,7 +27,14 @@ func main() {
 		FullTimestamp: true,
 	})
 
-	LoadDotEnvFile(".env")
+	envFilePath := ".env"
+	args := os.Args[1:]
+
+	if len(args) > 0 {
+		envFilePath = args[0]
+	}
+
+	LoadDotEnvFile(envFilePath)
 
 	MAPSERVER_EXEC = GetMapServerPath()
 
@@ -197,7 +204,9 @@ func createMd5Hash(text string) string {
 
 func LoadDotEnvFile(path string) {
 	if err := godotenv.Load(path); err != nil {
-		log.Println("Error loading env file")
+		msg := "Cannot load '%s' environment file. " +
+			"Looking for environment variables in the system environment"
+		log.Warnf(msg, path)
 	}
 }
 
@@ -205,8 +214,8 @@ func GetMapServerPath() string {
 	envVar := os.Getenv("MAPSERVER_WRAPPER_MAP_SERV_EXEC_PATH")
 
 	if envVar == "" {
-		log.Warn("MAPSERVER_WRAPPER_ALLOWED_ORIGINS environment variable is not defined. ")
-		panic("MAPSERVER_WRAPPER_MAP_SERV_EXEC_PATH is no defined")
+		fmt.Println("MAPSERVER_WRAPPER_ALLOWED_ORIGINS environment variable is not defined. Aborted.")
+		os.Exit(1)
 	}
 
 	return envVar
