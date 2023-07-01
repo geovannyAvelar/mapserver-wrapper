@@ -53,12 +53,13 @@ func handleTile(w http.ResponseWriter, r *http.Request) {
 	queryString := r.URL.RawQuery
 	b, err := renderTile(MAPSERVER_EXEC, queryString)
 
-	if err != nil {
+	if queryString == "" || err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	w.Header().Add("Content-Type", "image/jpeg")
+	w.Header().Add("Content-Disposition", "inline; filename=\"tile.jpeg\"")
 	w.Write(b)
 }
 
@@ -70,7 +71,7 @@ func renderTile(mapServerExecPath, queryString string) ([]byte, error) {
 		queryString,
 	)
 
-	out, err := cmd.CombinedOutput()
+	out, err := cmd.Output()
 	if err != nil {
 		msg := fmt.Sprintf("Failed to render tile: %v", err)
 		log.Error(msg)
@@ -88,7 +89,10 @@ func renderTile(mapServerExecPath, queryString string) ([]byte, error) {
 		return nil, fmt.Errorf("cannot generate tile. %s", message)
 	}
 
-	return out, nil
+	response = strings.ReplaceAll(response, "Content-Type: image/jpeg", "")
+	response = strings.TrimSpace(response)
+
+	return []byte(response), nil
 }
 
 func parseMapServerErrorMessage(htmlResponse string) (string, error) {
