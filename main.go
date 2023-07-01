@@ -75,7 +75,7 @@ func handleTile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go saveTile(queryString, imgType, b)
+	go saveTile(queryString, b)
 
 	w.Header().Add("Content-Type", fmt.Sprintf("image/%s", imgType))
 	w.Header().Add("Content-Disposition", fmt.Sprintf("inline; filename=\"image.%s\"", imgType))
@@ -153,8 +153,8 @@ func parseMapServerErrorMessage(htmlResponse string) (string, error) {
 	return "", errors.New("cannot parse MapServer error message")
 }
 
-func saveTile(queryString string, format string, bytes []byte) error {
-	filepath := GetCachePath() + string(os.PathSeparator) + createMd5Hash(queryString) + "." + format
+func saveTile(queryString string, bytes []byte) error {
+	filepath := GetCachePath() + string(os.PathSeparator) + createMd5Hash(queryString)
 
 	if _, err := os.Stat(filepath); err == nil {
 		return nil
