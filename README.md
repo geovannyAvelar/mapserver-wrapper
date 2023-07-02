@@ -22,7 +22,7 @@ a different dot file, simply use this command:
 
 ```./mapserver-wrapper DIFFERENT_DOT_FILE_PATH.env```
 
-## Enviroment variables
+## Environment variables
 
 * **MAPSERVER_WRAPPER_MAP_SERV_EXEC_PATH**: Path to MapServer executable. Default is the MapServer executable located in this repository, in *bin/mapserv*;
 * **MAPSERVER_WRAPPER_ALLOWED_ORIGINS**: API allowed origins, separated by commas (,). If not defined, default is *http://localhost:PORT*;
