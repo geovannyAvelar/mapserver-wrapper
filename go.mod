@@ -1,4 +1,4 @@
-module mapserver-wrapper
+module github.com/geovannyAvelar/mapserver-wrapper
 
 go 1.19
 
