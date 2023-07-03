@@ -16,4 +16,4 @@ run:
 
 clean:
 	go clean
-	rm ${BINARY_FILE_NAME}-* *.out
+	rm -f ${BINARY_FILE_NAME} *.out
