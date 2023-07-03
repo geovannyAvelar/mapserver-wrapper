@@ -161,13 +161,20 @@ func parseMapServerErrorMessage(htmlResponse string) (string, error) {
 }
 
 func saveTile(queryString string, bytes []byte) error {
-	filepath := GetCachePath() + string(os.PathSeparator) + createMd5Hash(queryString)
+	queryHash, err := createMd5Hash(queryString)
+
+	if err != nil {
+		log.Errorf("Cannot save tile. Cause: %s", err.Error())
+		return fmt.Errorf("cannot generate tile hash. Cause: %w", err)
+	}
+
+	filepath := GetCachePath() + string(os.PathSeparator) + queryHash
 
 	if _, err := os.Stat(filepath); err == nil {
 		return nil
 	}
 
-	err := os.WriteFile(filepath, bytes, 0644)
+	err = os.WriteFile(filepath, bytes, 0644)
 
 	if err != nil {
 		log.Warnf("cannot create tile file. Cause: %s", err)
@@ -178,7 +185,13 @@ func saveTile(queryString string, bytes []byte) error {
 }
 
 func getTileFromDisk(queryString string) ([]byte, error) {
-	filepath := GetCachePath() + string(os.PathSeparator) + createMd5Hash(queryString)
+	queryHash, err := createMd5Hash(queryString)
+
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate tile hash. Cause: %w", err)
+	}
+
+	filepath := GetCachePath() + string(os.PathSeparator) + queryHash
 
 	if _, err := os.Stat(filepath); err != nil {
 		return nil, errors.New("tile is not cached")
@@ -193,13 +206,13 @@ func getTileFromDisk(queryString string) ([]byte, error) {
 	return bytes, nil
 }
 
-func createMd5Hash(text string) string {
+func createMd5Hash(text string) (string, error) {
 	hasher := md5.New()
 	_, err := io.WriteString(hasher, text)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
-	return hex.EncodeToString(hasher.Sum(nil))
+	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
 func LoadDotEnvFile(path string) {
