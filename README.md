@@ -1,7 +1,7 @@
 # MapServer Wrapper
 
 This repository contains a simple wrapper for MapServer, allowing cache of WMS tiles on disk.
-It is completely written in Go.
+It is completely written in Go 1.19.
 
 ## Build instructions
 
